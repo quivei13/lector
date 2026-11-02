@@ -405,8 +405,16 @@ dialog form { text-align: right; }
     height: 54px;
     border-radius: 50%;
     font-size: 18px;
-    background: color-mix(in srgb, var(--bar-bg) 88%, transparent);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    /* Almost see-through: they sit on top of the text at the end of the page. */
+    color: color-mix(in srgb, var(--fg) 28%, transparent);
+    background: color-mix(in srgb, var(--bar-bg) 15%, transparent);
+    border-color: color-mix(in srgb, var(--muted) 35%, transparent);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.touch-controls button:active {
+    color: var(--fg);
+    background: color-mix(in srgb, var(--bar-bg) 75%, transparent);
 }
 
 @media (pointer: coarse) {
