@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Lector con guía</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Lector">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="src/vendor/foliate-js/vendor/pdfjs/text_layer_builder.css">
+    <link rel="stylesheet" href="src/styles.css">
+    <script type="module" src="src/main.js"></script>
+</head>
+<body>
+    <div class="bars">
+    <header class="bar" id="top-bar">
+        <button id="open-btn" class="primary" title="Abrir archivo (O)">Abrir</button>
+        <input id="file-input" type="file" hidden
+            accept=".pdf,.epub,.mobi,.azw,.azw3,.kf8,.prc,.fb2,.fbz,.cbz,application/pdf,application/epub+zip">
+        <button id="toc-btn" data-needs-doc title="Índice de contenido (I)" aria-controls="toc">☰ Índice</button>
+        <span id="doc-title" class="doc-title">Ningún archivo abierto</span>
+
+        <div class="group" data-needs-doc>
+            <button id="prev-btn" title="Página anterior (←)" aria-label="Página anterior">‹</button>
+            <span id="page-label" class="muted"></span>
+            <button id="next-btn" title="Página siguiente (→)" aria-label="Página siguiente">›</button>
+        </div>
+        <div class="group" data-needs-doc>
+            <span id="zoom-name" class="muted">Letra</span>
+            <button id="zoom-out" class="font-btn" title="Achicar (Ctrl/⌘ −)" aria-label="Achicar">A−</button>
+            <button id="zoom-label" class="zoom-value" title="Volver al tamaño original (Ctrl/⌘ 0)"></button>
+            <button id="zoom-in" class="font-btn big" title="Agrandar (Ctrl/⌘ +)" aria-label="Agrandar">A+</button>
+        </div>
+        <label class="group">
+            <span class="muted">Tema</span>
+            <select id="theme">
+                <option value="light">Claro</option>
+                <option value="sepia">Sepia</option>
+                <option value="dark">Oscuro</option>
+            </select>
+        </label>
+        <button id="options-btn" data-needs-doc aria-controls="guide-bar" title="Mostrar / ocultar las opciones de la guía">⚙ Opciones <span class="chevron" aria-hidden="true">▴</span></button>
+        <button id="help-btn" title="Atajos de teclado (?)" aria-label="Atajos de teclado">?</button>
+    </header>
+
+    <section class="bar guide-bar" id="guide-bar" aria-label="Guía de lectura">
+        <label class="switch">
+            <input type="checkbox" id="guide-enabled">
+            <span>Guía <kbd>G</kbd></span>
+        </label>
+        <label class="slider">
+            <span>Texto resaltado <output id="hl-value"></output></span>
+            <input type="range" id="hl-opacity" min="0" max="100" step="1">
+        </label>
+        <label class="slider">
+            <span>Texto no resaltado <output id="dim-value"></output></span>
+            <input type="range" id="dim-opacity" min="0" max="100" step="1">
+        </label>
+        <label class="slider small">
+            <span>Líneas <output id="lines-value"></output></span>
+            <input type="range" id="lines" min="1" max="6" step="1">
+        </label>
+        <label class="group">
+            <span class="muted">Modo</span>
+            <select id="mode">
+                <option value="snap">Ajustar a línea</option>
+                <option value="free">Franja libre</option>
+            </select>
+        </label>
+        <label class="switch">
+            <input type="checkbox" id="follow-mouse">
+            <span>Seguir puntero <kbd>F</kbd></span>
+        </label>
+        <label class="switch">
+            <input type="checkbox" id="word-mode">
+            <span>Palabra por palabra <kbd>W</kbd></span>
+        </label>
+        <label class="group color">
+            <span class="muted">Color</span>
+            <input type="color" id="tint-color">
+        </label>
+        <label class="slider small">
+            <span>Intensidad <output id="tint-value"></output></span>
+            <input type="range" id="tint-strength" min="0" max="70" step="1">
+        </label>
+    </section>
+    </div>
+
+    <main id="reader-area">
+        <div id="welcome" class="welcome">
+            <div class="drop">
+                <h1>Lector con guía de lectura</h1>
+                <p><span class="fine-pointer">Arrastrá un archivo <strong>PDF, EPUB o MOBI</strong> aquí, o</span><span class="coarse-pointer">Abrí un archivo <strong>PDF, EPUB o MOBI</strong></span></p>
+                <button id="welcome-open" class="primary">Elegir archivo</button>
+                <p class="muted small-text">El archivo se abre en tu navegador; no se sube a ningún servidor.</p>
+            </div>
+        </div>
+        <div id="loading" class="loading" hidden>Abriendo…</div>
+        <div id="toc-backdrop" class="toc-backdrop" hidden></div>
+        <aside id="toc" class="toc" hidden aria-label="Índice de contenido">
+            <div class="toc-head">
+                <h2>Índice</h2>
+                <button id="toc-close" aria-label="Cerrar índice" title="Cerrar (Esc)">×</button>
+            </div>
+            <nav id="toc-list"></nav>
+        </aside>
+    </main>
+
+    <div id="guide-layer" class="guide-layer" hidden>
+        <div class="guide-band">
+            <div class="guide-handle" title="Arrastrar para cambiar el alto"></div>
+        </div>
+    </div>
+
+    <div id="touch-controls" class="touch-controls" data-needs-doc>
+        <button id="touch-prev" type="button" aria-label="Línea o palabra anterior">▲</button>
+        <button id="touch-next" type="button" aria-label="Línea o palabra siguiente">▼</button>
+    </div>
+
+    <div id="drop-overlay" class="drop-overlay" hidden>Soltá el archivo para abrirlo</div>
+
+    <dialog id="help">
+        <h2>Atajos</h2>
+        <table>
+            <tr><td><kbd>↓</kbd> / <kbd>J</kbd></td><td>Línea siguiente (pasa de página al final)</td></tr>
+            <tr><td><kbd>↑</kbd> / <kbd>K</kbd></td><td>Línea anterior</td></tr>
+            <tr><td><kbd>Shift</kbd> + <kbd>↓</kbd>/<kbd>↑</kbd></td><td>Saltar 5 líneas</td></tr>
+            <tr><td><kbd>→</kbd> <kbd>←</kbd> <kbd>RePág</kbd> <kbd>AvPág</kbd> <kbd>Espacio</kbd></td><td>Cambiar de página</td></tr>
+            <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Más / menos líneas en la franja (alto, en modo libre)</td></tr>
+            <tr><td><kbd>[</kbd> / <kbd>]</kbd></td><td>Opacidad del texto no resaltado</td></tr>
+            <tr><td><kbd>{</kbd> / <kbd>}</kbd></td><td>Opacidad del texto resaltado</td></tr>
+            <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>+</kbd> / <kbd>-</kbd></td><td>Agrandar / achicar la letra (zoom en PDF)</td></tr>
+            <tr><td><kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>0</kbd></td><td>Tamaño original</td></tr>
+            <tr><td><kbd>G</kbd></td><td>Activar / desactivar la guía</td></tr>
+            <tr><td><kbd>M</kbd></td><td>Modo ajustar a línea / franja libre</td></tr>
+            <tr><td><kbd>F</kbd></td><td>Seguir el puntero del mouse</td></tr>
+            <tr><td><kbd>W</kbd></td><td>Palabra por palabra: <kbd>↓</kbd>/<kbd>↑</kbd> pasan a la palabra siguiente/anterior</td></tr>
+            <tr><td><kbd>I</kbd></td><td>Mostrar / ocultar el índice de contenido</td></tr>
+            <tr><td><kbd>O</kbd></td><td>Abrir archivo</td></tr>
+        </table>
+        <h2>Mouse</h2>
+        <ul>
+            <li>Mover el puntero: la franja sigue la línea (si “Seguir puntero” está activo).</li>
+            <li>Clic: lleva la franja a esa línea.</li>
+            <li><kbd>Alt</kbd>/<kbd>⌥</kbd> + rueda: avanzar o retroceder línea por línea.</li>
+            <li>Modo libre: arrastrá el borde inferior de la franja para cambiar su alto.</li>
+        </ul>
+        <form method="dialog"><button class="primary">Cerrar</button></form>
+    </dialog>
+</body>
+</html>
