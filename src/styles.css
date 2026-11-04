@@ -397,19 +397,28 @@ dialog form { text-align: right; }
     bottom: calc(20px + env(safe-area-inset-bottom));
     z-index: 15;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .touch-controls button {
-    width: 54px;
-    height: 54px;
+    position: relative;
+    width: 76px;
+    height: 76px;
     border-radius: 50%;
-    font-size: 18px;
+    font-size: 24px;
+    touch-action: manipulation;
     /* Almost see-through: they sit on top of the text at the end of the page. */
     color: color-mix(in srgb, var(--fg) 28%, transparent);
     background: color-mix(in srgb, var(--bar-bg) 15%, transparent);
     border-color: color-mix(in srgb, var(--muted) 35%, transparent);
     -webkit-tap-highlight-color: transparent;
+}
+
+/* Invisible margin: a touch that just misses still counts as the button. */
+.touch-controls button::after {
+    content: '';
+    position: absolute;
+    inset: -14px;
 }
 
 .touch-controls button:active {
